@@ -1,0 +1,28 @@
+--release
+--output
+C:\Users\9A4AM\Desktop\Radiosonde predict calculator by 9A4AM\Objects
+--lib
+C:\Android\platforms\android-36\android.jar
+--min-api
+21
+C:\Android\tools\..\extras\b4a_local\unpacked-b4ashared-63888251086000\dex_v1\b4ashared.zip
+c:\android\tools\..\extras\b4a_remote\com\android\support\multidex\1.0.3\unpacked-multidex-1.0.3\jars\classes.zip
+C:\Android\tools\..\extras\b4a_local\unpacked-core-63888251086000\dex_v1\core.zip
+C:\Android\tools\..\extras\b4a_local\unpacked-javaobject-63888251086000\dex_v1\javaobject.zip
+C:\Android\tools\..\extras\b4a_local\unpacked-xui-63888251088000\dex_v1\xui.zip
+C:\Android\tools\..\extras\b4a_local\unpacked-clipboard-63430804832000\dex_v1\clipboard.zip
+C:\Users\9A4AM\Desktop\Radiosonde predict calculator by 9A4AM\Objects\dexed\b4a\RS_calculator\doubletaptoclose.dex
+C:\Users\9A4AM\Desktop\Radiosonde predict calculator by 9A4AM\Objects\dexed\b4a\RS_calculator\main$1.dex
+C:\Users\9A4AM\Desktop\Radiosonde predict calculator by 9A4AM\Objects\dexed\b4a\RS_calculator\main$B4AMenuItemsClickListener.dex
+C:\Users\9A4AM\Desktop\Radiosonde predict calculator by 9A4AM\Objects\dexed\b4a\RS_calculator\main$HandleKeyDelayed.dex
+C:\Users\9A4AM\Desktop\Radiosonde predict calculator by 9A4AM\Objects\dexed\b4a\RS_calculator\main$ResumeMessage.dex
+C:\Users\9A4AM\Desktop\Radiosonde predict calculator by 9A4AM\Objects\dexed\b4a\RS_calculator\main$WaitForLayout.dex
+C:\Users\9A4AM\Desktop\Radiosonde predict calculator by 9A4AM\Objects\dexed\b4a\RS_calculator\main.dex
+C:\Users\9A4AM\Desktop\Radiosonde predict calculator by 9A4AM\Objects\dexed\b4a\RS_calculator\R$drawable.dex
+C:\Users\9A4AM\Desktop\Radiosonde predict calculator by 9A4AM\Objects\dexed\b4a\RS_calculator\R$style.dex
+C:\Users\9A4AM\Desktop\Radiosonde predict calculator by 9A4AM\Objects\dexed\b4a\RS_calculator\R.dex
+C:\Users\9A4AM\Desktop\Radiosonde predict calculator by 9A4AM\Objects\dexed\b4a\RS_calculator\starter$1.dex
+C:\Users\9A4AM\Desktop\Radiosonde predict calculator by 9A4AM\Objects\dexed\b4a\RS_calculator\starter$2.dex
+C:\Users\9A4AM\Desktop\Radiosonde predict calculator by 9A4AM\Objects\dexed\b4a\RS_calculator\starter$starter_BR.dex
+C:\Users\9A4AM\Desktop\Radiosonde predict calculator by 9A4AM\Objects\dexed\b4a\RS_calculator\starter.dex
+C:\Users\9A4AM\Desktop\Radiosonde predict calculator by 9A4AM\Objects\dexed\b4a\RS_calculator\designerscripts\LS_layout.dex

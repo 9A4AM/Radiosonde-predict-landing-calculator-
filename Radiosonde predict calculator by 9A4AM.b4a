@@ -1,0 +1,386 @@
+﻿Build1=Default,b4a.RS_calculator
+File1=Layout.bal
+FileGroup1=Default Group
+Group=Default Group
+Library1=core
+Library2=javaobject
+Library3=xui
+Library4=clipboard
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true"~\n~	android:configChanges="orientation|screenSize" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~CreateResourceFromFile(Macro, Themes.LightTheme)~\n~'End of default text.~\n~
+Module1=DoubleTaptoClose
+Module2=Starter
+NumberOfFiles=1
+NumberOfLibraries=4
+NumberOfModules=2
+Version=13.4
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Sonde landing predict calculator 9A4AM
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: unspecified
+	#CanInstallToExternalStorage: False
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+
+Sub Process_Globals
+	Private rEarth As Double = 6371000 ' meters
+	Private Const PI As Double = 3.141592653589793
+	Private xui As XUI
+	Dim gLat, gLon, gAlt, gGround, gVv, gH, gHeading, gDescent As String
+	Dim gUnitMs, gUnitKmh As Boolean
+End Sub
+
+Sub Globals
+	Private edtLat, edtLon, edtAlt, edtVv, edtH, edtHeading, edtDescent, edtGround As EditText
+	Private lblResult As Label
+	Private btnCompute, btnOpenMaps, btnShare, btnCopy As Button
+	Private cbMs, cbKmh As CheckBox
+	Private lastResultLat, lastResultLon, lastTimeToLand, lastHorizDist As Double
+	Private sv As ScrollView
+	Dim F As DoubleTaptoClose
+
+
+
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.Color = Colors.RGB(18,18,18) ' dark background
+	Dim gold As Int = Colors.RGB(212,175,55) ' gold text
+	Dim black As Int = Colors.Black
+	F.Initialize ("Tap BACK again to exit",Me,"BeforeClose",2,2000)
+	' Initialize ScrollView
+	sv.Initialize(0)
+	Activity.AddView(sv, 0, 0, 100%x, 100%y)
+	Dim panelHeight As Int = 2300dip
+	sv.Panel.Height = panelHeight
+
+	Dim y As Int = 10dip, h As Int = 60dip, w As Int = 90%x
+
+	' Labels and EditTexts
+	CreateLabel("Latitude last received (°)", y, gold) : y = y + h
+	edtLat = CreateEditText(y) : y = y + h
+	AddDivider(y, w) : y = y + 10dip
+	
+	CreateLabel("Longitude last received (°)", y, gold) : y = y + h
+	edtLon = CreateEditText(y) : y = y + h
+	AddDivider(y, w) : y = y + 10dip
+	
+	CreateLabel("Altitude last received (m)", y, gold) : y = y + h
+	edtAlt = CreateEditText(y) : y = y + h
+	AddDivider(y, w) : y = y + 10dip
+	
+	CreateLabel("Ground level (m)", y, gold) : y = y + h
+	edtGround = CreateEditText(y) : y = y + h
+	AddDivider(y, w) : y = y + 10dip
+	
+	CreateLabel("Vertical speed  last received (m/s) without sign", y, gold) : y = y + h
+	edtVv = CreateEditText(y) : y = y + h
+	AddDivider(y, w) : y = y + 10dip
+	
+	CreateLabel("Horizontal speed last received", y, gold) : y = y + h
+	edtH = CreateEditText(y) : y = y + h
+	AddDivider(y, w) : y = y + 10dip
+	
+	' Radio-style CheckBoxes for speed unit
+	CreateLabel("Speed unit", y, gold) : y = y + h
+	cbMs.Initialize("cbMs")
+	cbMs.Text = "m/s" : cbMs.TextColor = gold : cbMs.Checked = True
+	sv.Panel.AddView(cbMs, 5%x, y, 40%x, h)
+	cbKmh.Initialize("cbKmh")
+	cbKmh.Text = "km/h" : cbKmh.TextColor = gold
+	sv.Panel.AddView(cbKmh, 50%x, y, 40%x, h)
+	y = y + h
+	AddDivider(y, w) : y = y + 10dip
+	
+	Dim jo1 As JavaObject = cbMs
+	Dim jo1 As JavaObject = cbMs
+	If jo1.IsInitialized Then
+		Try
+			jo1.RunMethod("setButtonTintList", Array(CreateColorStateList(Colors.White)))
+		Catch
+			Log("Tint unsupported on this Android version.")
+		End Try
+	End If
+	
+	Dim jo2 As JavaObject = cbKmh
+	If jo2.IsInitialized Then
+		Try
+			jo2.RunMethod("setButtonTintList", Array(CreateColorStateList(Colors.White)))
+		Catch
+			Log("Tint unsupported on this Android version.")
+		End Try
+	End If
+	
+	
+	CreateLabel("Direction - Course last received (°)", y, gold) : y = y + h
+	edtHeading = CreateEditText(y) : y = y + h
+	AddDivider(y, w) : y = y + 10dip
+	
+	CreateLabel("Correction factor (m)", y, gold) : y = y + h
+	edtDescent = CreateEditText(y) : edtDescent.Text = "45" : y = y + h
+	AddDivider(y, w) : y = y + 10dip
+	
+	' Buttons
+	btnCompute.Initialize("btnCompute")
+	btnCompute.Text = "Calculate predict landing point" : btnCompute.TextColor = black
+	sv.Panel.AddView(btnCompute, 5%x, y, w, h) : y = y + h
+	
+	lblResult.Initialize("")
+	lblResult.TextColor = gold
+	lblResult.TextSize = 16
+	lblResult.Gravity = Bit.Or(Gravity.CENTER_HORIZONTAL, Gravity.TOP)
+	sv.Panel.AddView(lblResult, 5%x, y, w, 200dip)
+	y = y + 200dip
+	
+	btnOpenMaps.Initialize("btnOpenMaps") : btnOpenMaps.Text = "Open Maps" : btnOpenMaps.TextColor = black
+	sv.Panel.AddView(btnOpenMaps, 5%x, y, w, h) : y = y + h
+	
+	btnShare.Initialize("btnShare") : btnShare.Text = "Share" : btnShare.TextColor = black
+	sv.Panel.AddView(btnShare, 5%x, y, w, h) : y = y + h
+	
+	btnCopy.Initialize("btnCopy") : btnCopy.Text = "Copy coords" : btnCopy.TextColor = black
+	sv.Panel.AddView(btnCopy, 5%x, y, w, h)
+	
+	
+	If gLat <> "" Then edtLat.Text = gLat
+	If gLon <> "" Then edtLon.Text = gLon
+	If gAlt <> "" Then edtAlt.Text = gAlt
+	If gGround <> "" Then edtGround.Text = gGround
+	If gVv <> "" Then edtVv.Text = gVv
+	If gH <> "" Then edtH.Text = gH
+	If gHeading <> "" Then edtHeading.Text = gHeading
+	If gDescent <> "" Then edtDescent.Text = gDescent
+	cbMs.Checked = gUnitMs
+	cbKmh.Checked = gUnitKmh
+	
+	'  If nothing checked, set m/s as default
+	If cbMs.Checked = False And cbKmh.Checked = False Then
+	cbMs.Checked = True
+	End If
+End Sub
+
+Sub CreateLabel(txt As String, y As Int, color As Int)
+	Dim lbl As Label
+	lbl.Initialize("")
+	lbl.TextColor = color
+	lbl.Text = txt
+	sv.Panel.AddView(lbl, 5%x, y, 90%x, 60dip)
+End Sub
+
+Sub CreateEditText(y As Int) As EditText
+	Dim e As EditText
+	e.Initialize("")
+	e.TextColor = Colors.White
+	e.Color = Colors.RGB(30,30,30)
+	sv.Panel.AddView(e, 5%x, y, 90%x, 60dip)
+
+	' Enable numeric decimal keyboard using InputType constants
+	Dim jo As JavaObject = e
+	Dim TYPE_CLASS_NUMBER As Int = 2
+	Dim TYPE_NUMBER_FLAG_DECIMAL As Int = 8192
+	jo.RunMethod("setInputType", Array(Bit.Or(TYPE_CLASS_NUMBER, TYPE_NUMBER_FLAG_DECIMAL)))
+
+	Return e
+End Sub
+
+Sub AddDivider(y As Int, width As Int) As Panel
+	Dim p As Panel
+	p.Initialize("")
+	p.Color = Colors.White ' White line
+	sv.Panel.AddView(p, 5%x, y, width, 2dip) ' 2dip high
+	Return p
+End Sub
+
+' -------------------------
+' Radio-style CheckBox logic
+' -------------------------
+Sub cbMs_CheckedChange(Checked As Boolean)
+	If Checked Then cbKmh.Checked = False
+End Sub
+
+Sub cbKmh_CheckedChange(Checked As Boolean)
+	If Checked Then cbMs.Checked = False
+End Sub
+
+' -------------------------
+' Buttons click events
+' -------------------------
+Sub btnCompute_Click
+	Dim lat As Double = edtLat.Text
+	Dim lon As Double = edtLon.Text
+	Dim alt As Double = edtAlt.Text
+	Dim ground As Double = edtGround.Text
+	Dim vv As Double = edtVv.Text
+	Dim hIn As Double = edtH.Text
+	Dim unit As String = IIf(cbKmh.Checked, "km/h", "m/s")
+	Dim heading As Double = edtHeading.Text
+	Dim descentFactor As Double = edtDescent.Text
+
+	Dim effectiveAltitude As Double = alt - descentFactor - ground
+	If effectiveAltitude < 0 Then effectiveAltitude = 0
+
+	Dim hSpeed As Double = IIf(unit = "km/h", KmH_To_mps(hIn), hIn)
+	If vv <= 0 Then
+		ToastMessageShow("Vert. speed must be > 0 (m/s downward)", True)
+		Return
+	End If
+
+	Dim res() As Double = ComputeLanding(lat, lon, effectiveAltitude, vv, hSpeed, heading, 0)
+	lastResultLat = res(0)
+	lastResultLon = res(1)
+	lastTimeToLand = res(2)
+	lastHorizDist = res(3)
+
+	lblResult.Text = $"Predicted landing point:
+Lat: ${NumberFormat2(lastResultLat,1,5,5,False)}
+Lon: ${NumberFormat2(lastResultLon,1,5,5,False)}
+Time remaining to landing: ${MyRound2(lastTimeToLand,2)} s
+Distance remaining to landing: ${MyRound2(lastHorizDist,2)} m"$
+End Sub
+
+Sub btnOpenMaps_Click
+	If lastResultLat = 0 And lastResultLon = 0 Then
+		ToastMessageShow("Compute first", True)
+		Return
+	End If
+	Dim uri As String = $"geo:${lastResultLat},${lastResultLon}?q=${lastResultLat},${lastResultLon}(PredictedLanding)"$
+	Dim i As Intent
+	i.Initialize(i.ACTION_VIEW, uri)
+	StartActivity(i)
+End Sub
+
+Sub btnCopy_Click
+	If lastResultLat = 0 And lastResultLon = 0 Then
+		ToastMessageShow("Calculate first", True)
+		Return
+	End If
+
+	Dim txt As String = $"${NumberFormat2(lastResultLat,1,5,5,False)},${NumberFormat2(lastResultLon,1,5,5,False)}"$
+
+	' Copy to clipboard using Clipboard library
+
+	Dim clip As BClipboard
+	clip.clrText
+	clip.settext(txt)
+
+	ToastMessageShow("Copied to Clipboard: " & txt, True)
+End Sub
+
+
+
+
+
+
+
+Sub btnShare_Click
+	If lastResultLat = 0 And lastResultLon = 0 Then
+		ToastMessageShow("Calculate first", True)
+		Return
+	End If
+	Dim txt As String = $"Predicted landing point: ${NumberFormat2(lastResultLat,1,5,5,False)}, ${NumberFormat2(lastResultLon,1,5,5,False)}
+Time remaining to landing: ${MyRound2(lastTimeToLand,2)} s
+Distance remaining to landing: ${MyRound2(lastHorizDist,2)} m"$
+	Dim i As Intent
+	i.Initialize(i.ACTION_SEND, "")
+	i.PutExtra("android.intent.extra.TEXT", txt)
+	i.SetType("text/plain")
+	StartActivity(i)
+End Sub
+
+' -------------------------
+' Helper functions
+' -------------------------
+Sub KmH_To_mps(kmh As Double) As Double
+	Return kmh / 3.6
+End Sub
+
+Sub MyRound2(v As Double, digits As Int) As Double
+	Dim mult As Double = Power(10, digits)
+	Return Round(v * mult) / mult
+End Sub
+
+Sub ComputeLanding(latDeg As Double, lonDeg As Double, altMeters As Double, vVertical As Double, hSpeed As Double, headingDeg As Double, descentFactor As Double) As Double()
+	Dim res(4) As Double
+	If vVertical <= 0 Then
+		res(0)=latDeg:res(1)=lonDeg:res(2)=0:res(3)=0
+		Return res
+	End If
+	Dim timeToLand As Double = altMeters / vVertical
+	Dim horizDist As Double = hSpeed * timeToLand
+	Dim lat1 As Double = latDeg * PI / 180
+	Dim lon1 As Double = lonDeg * PI / 180
+	Dim brg As Double = headingDeg * PI / 180
+	Dim d As Double = horizDist
+	Dim R As Double = rEarth
+	Dim lat2 As Double = ASin(Sin(lat1)*Cos(d/R) + Cos(lat1)*Sin(d/R)*Cos(brg))
+	Dim lon2 As Double = lon1 + ATan2(Sin(brg)*Sin(d/R)*Cos(lat1), Cos(d/R) - Sin(lat1)*Sin(lat2))
+	lat2 = lat2 * 180 / PI
+	lon2 = lon2 * 180 / PI
+	lon2 = ((lon2 + 540) Mod 360) - 180
+	res(0)=lat2:res(1)=lon2:res(2)=timeToLand:res(3)=horizDist
+	Return res
+End Sub
+
+Sub Activity_SaveInstanceState (OutState As Map)
+	OutState.Put("lat", edtLat.Text)
+	OutState.Put("lon", edtLon.Text)
+	OutState.Put("alt", edtAlt.Text)
+	OutState.Put("ground", edtGround.Text)
+	OutState.Put("vv", edtVv.Text)
+	OutState.Put("h", edtH.Text)
+	OutState.Put("heading", edtHeading.Text)
+	OutState.Put("descent", edtDescent.Text)
+	OutState.Put("unitMs", cbMs.Checked)
+	OutState.Put("unitKmh", cbKmh.Checked)
+End Sub
+
+Sub Activity_RestoreInstanceState (SavedState As Map)
+	If SavedState.ContainsKey("lat") Then edtLat.Text = SavedState.Get("lat")
+	If SavedState.ContainsKey("lon") Then edtLon.Text = SavedState.Get("lon")
+	If SavedState.ContainsKey("alt") Then edtAlt.Text = SavedState.Get("alt")
+	If SavedState.ContainsKey("ground") Then edtGround.Text = SavedState.Get("ground")
+	If SavedState.ContainsKey("vv") Then edtVv.Text = SavedState.Get("vv")
+	If SavedState.ContainsKey("h") Then edtH.Text = SavedState.Get("h")
+	If SavedState.ContainsKey("heading") Then edtHeading.Text = SavedState.Get("heading")
+	If SavedState.ContainsKey("descent") Then edtDescent.Text = SavedState.Get("descent")
+	If SavedState.ContainsKey("unitMs") Then cbMs.Checked = SavedState.Get("unitMs")
+	If SavedState.ContainsKey("unitKmh") Then cbKmh.Checked = SavedState.Get("unitKmh")
+End Sub
+
+
+Sub Activity_Pause (UserClosed As Boolean)
+	' Save current value to Global variable
+	gLat = edtLat.Text
+	gLon = edtLon.Text
+	gAlt = edtAlt.Text
+	gGround = edtGround.Text
+	gVv = edtVv.Text
+	gH = edtH.Text
+	gHeading = edtHeading.Text
+	gDescent = edtDescent.Text
+	gUnitMs = cbMs.Checked
+	gUnitKmh = cbKmh.Checked
+End Sub
+
+Sub Activity_KeyPress (KeyCode As Int) As Boolean 'Return True to consume the event
+	If KeyCode = KeyCodes.KEYCODE_BACK Then
+		F.TapToClose
+		Return True
+	End If
+End Sub
+
+
+Sub CreateColorStateList(color As Int) As Object
+	Dim jo As JavaObject
+	Dim states(1,0) As Int
+	jo.InitializeNewInstance("android.content.res.ColorStateList", Array(states, Colors))
+	Return jo
+End Sub
+
